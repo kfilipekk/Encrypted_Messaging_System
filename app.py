@@ -7,6 +7,7 @@ import hashlib
 import jwt
 from datetime import datetime, timedelta
 import os
+import requests
 
 app = Flask(__name__)
 
@@ -146,6 +147,12 @@ def get_messages():
     
     messages = [{'text': decrypt_message(row[0], row[1]), 'timestamp': row[2]} for row in rows]
     return jsonify({'messages': messages})
+
+##Function to skip ngrok warning when making requests
+def skip_ngrok_warning(url):
+    headers = {"ngrok-skip-browser-warning": "true"}
+    response = requests.get(url, headers=headers)
+    return response.text
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
