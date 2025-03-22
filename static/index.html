@@ -3,80 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Encrypted Messaging</title>
+    <title>Secure Chatbot Messenger</title>
     <style>
         body { 
-            font-family: Arial, sans-serif; 
+            font-family: 'Segoe UI', Arial, sans-serif; 
             padding: 20px; 
-            background-color: #f5f5f5; 
+            background: linear-gradient(135deg, #0ce797, #9cdaf1);
             margin: 0; 
+            min-height: 100vh;
         }
-        .container { max-width: 800px; margin: auto; }
-        h1 { color: #333; }
-        #auth, #chat { border: 1px solid #ccc; padding: 15px; background: white; border-radius: 5px; }
-        #auth { margin-bottom: 20px; display: none; }
+        .container { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 { 
+            color: #2c3e50; 
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        #auth, #chat { 
+            padding: 20px; 
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        #auth { 
+            margin-bottom: 25px; 
+            display: none; 
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
         #chat { display: none; }
         #messages { 
-            border: 1px solid #ddd; 
-            padding: 10px; 
-            height: 300px; 
+            border: 1px solid #e0e0e0; 
+            padding: 15px; 
+            height: 400px; 
             overflow-y: auto; 
-            background: #fafafa; 
-            margin-bottom: 10px; 
+            background: #f8f9fa; 
+            margin-bottom: 15px;
+            border-radius: 5px;
         }
-        .message { padding: 8px; border-bottom: 1px solid #eee; }
-        .message span { font-size: 0.8em; color: #666; }
+        .message { 
+            padding: 10px; 
+            margin: 5px 0;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .message span { 
+            font-size: 0.8em; 
+            color: #7f8c8d; 
+            display: block;
+            margin-top: 5px;
+        }
+        .message img, .message video {
+            max-width: 300px;
+            max-height: 200px;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+        .input-container {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
         #messageInput { 
-            width: 70%; 
-            padding: 8px; 
-            border: 1px solid #ccc; 
-            border-radius: 4px; 
+            flex: 1;
+            padding: 10px; 
+            border: 2px solid #ddd; 
+            border-radius: 5px;
+            font-size: 1em;
+            min-width: 200px;
         }
         button { 
-            padding: 8px 15px; 
-            background: #007bff; 
+            padding: 10px 20px; 
+            background: #3498db; 
             color: white; 
             border: none; 
-            border-radius: 4px; 
-            cursor: pointer; 
+            border-radius: 20px; 
+            cursor: pointer;
+            transition: background 0.3s;
         }
-        button:hover { background: #0056b3; }
-        #logoutBtn { background: #dc3545; }
-        #logoutBtn:hover { background: #c82333; }
-        .error { color: red; font-size: 0.9em; }
+        button:hover { background: #2980b9; }
+        #logoutBtn { background: #e74c3c; }
+        #logoutBtn:hover { background: #c0392b; }
+        #mediaBtn { background: #2ecc71; }
+        #mediaBtn:hover { background: #27ae60; }
+        #refreshBtn { background: #f1c40f; color: #333; }
+        #refreshBtn:hover { background: #d4ac0d; }
+        #toggleBtn { background: #8e44ad; }
+        #toggleBtn:hover { background: #732d91; }
+        .error { color: #e74c3c; font-size: 0.9em; margin-top: 10px; }
+        .form-group { margin-bottom: 15px; }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        #userInfo {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #ecf0f1;
+            border-radius: 5px;
+        }
+        #chatError {
+            color: #e74c3c;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Secure Encrypted Messaging</h1>
+        <h1>Secure Chatbot Messenger</h1>
         
-        <!-- Authentication Section -->
         <div id="auth">
-            <h2 id="authTitle">Login</h2>
-            <input type="text" id="username" placeholder="Username">
-            <input type="password" id="password" placeholder="Password">
-            <button onclick="authUser()">Login</button>
-            <button onclick="toggleAuthMode()">Switch to Register</button>
+            <h2 id="authTitle">Join Chat</h2>
+            <div class="form-group">
+                <input type="text" id="displayName" placeholder="Enter your name">
+            </div>
+            <div class="form-group">
+                <input type="text" id="username" placeholder="Chatbot ID">
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" placeholder="Chatbot Key">
+            </div>
+            <div class="input-container">
+                <button onclick="authUser()">Connect to Chatbot</button>
+                <button id="toggleBtn" onclick="toggleAuthMode()">Switch to Create</button>
+            </div>
             <p id="authError" class="error"></p>
         </div>
 
-        <!-- Chat Section -->
         <div id="chat">
-            <div id="userInfo">Logged in as: <span id="currentUser"></span> <button id="logoutBtn" onclick="logout()">Logout</button></div>
+            <div id="userInfo">Chatting as: <span id="currentUser"></span> <button id="logoutBtn" onclick="logout()">Disconnect</button></div>
             <div id="messages"></div>
-            <input type="text" id="messageInput" placeholder="Type a message...">
-            <button onclick="sendMessage()">Send</button>
-            <button onclick="fetchMessages()">Refresh</button>
+            <div class="input-container">
+                <input type="text" id="messageInput" placeholder="Type a message...">
+                <button onclick="sendMessage()">Send</button>
+                <button id="mediaBtn" onclick="uploadMedia()">Add Media</button>
+                <button id="refreshBtn" onclick="fetchMessages()">Refresh</button>
+            </div>
+            <p id="chatError" class="error"></p>
+            <input type="file" id="mediaInput" accept="image/*,video/*" style="display:none" onchange="handleMediaUpload()">
         </div>
     </div>
 
     <script>
         let authMode = 'login';
         let token = localStorage.getItem('token');
+        let displayName = localStorage.getItem('displayName') || 'Anonymous';
 
-        // Check if user is already logged in
         if (token) {
             showChat();
+            document.getElementById('currentUser').textContent = displayName;
             fetchMessages();
         } else {
             document.getElementById('auth').style.display = 'block';
@@ -84,14 +171,19 @@
 
         function toggleAuthMode() {
             authMode = authMode === 'login' ? 'register' : 'login';
-            document.getElementById('authTitle').textContent = authMode === 'login' ? 'Login' : 'Register';
+            document.getElementById('authTitle').textContent = authMode === 'login' ? 'Join Chat' : 'Create Chat';
+            document.getElementById('toggleBtn').textContent = authMode === 'login' ? 'Switch to Create' : 'Switch to Join';
             document.getElementById('authError').textContent = '';
         }
 
         async function authUser() {
+            const displayNameInput = document.getElementById('displayName').value.trim();
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value.trim();
-            if (!username || !password) return;
+            if (!displayNameInput || !username || !password) {
+                document.getElementById('authError').textContent = 'All fields are required';
+                return;
+            }
 
             const endpoint = authMode === 'login' ? '/login' : '/register';
             try {
@@ -103,66 +195,148 @@
                 const data = await response.json();
                 if (data.error) {
                     document.getElementById('authError').textContent = data.error;
-                } else {
+                } else if (data.success) {
                     localStorage.setItem('token', data.token);
+                    localStorage.setItem('displayName', displayNameInput);
                     token = data.token;
-                    document.getElementById('currentUser').textContent = username;
+                    displayName = displayNameInput;
                     showChat();
-                    fetchMessages();
+                    await fetchMessages();
                 }
             } catch (e) {
-                document.getElementById('authError').textContent = 'An error occurred.';
+                document.getElementById('authError').textContent = 'Connection error: ' + e.message;
             }
         }
 
         function showChat() {
             document.getElementById('auth').style.display = 'none';
             document.getElementById('chat').style.display = 'block';
+            document.getElementById('currentUser').textContent = displayName;
         }
 
         function logout() {
             localStorage.removeItem('token');
+            localStorage.removeItem('displayName');
             token = null;
+            displayName = 'Anonymous';
             document.getElementById('chat').style.display = 'none';
             document.getElementById('auth').style.display = 'block';
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
-            document.getElementById('authError').textContent = '';
+            document.getElementById('messages').innerHTML = '';
+            document.getElementById('chatError').textContent = '';
         }
 
         async function sendMessage() {
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
-            if (!message || !token) return;
+            if (!message || !token) {
+                document.getElementById('chatError').textContent = 'Please enter a message and ensure you are logged in';
+                return;
+            }
 
-            await fetch('/send', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ message })
-            });
-            input.value = '';
-            fetchMessages();
+            try {
+                const response = await fetch('/send', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ message, sender: displayName })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    input.value = '';
+                    document.getElementById('chatError').textContent = '';
+                    await fetchMessages();
+                } else {
+                    document.getElementById('chatError').textContent = data.error || 'Failed to send message';
+                }
+            } catch (e) {
+                document.getElementById('chatError').textContent = 'Error sending message: ' + e.message;
+            }
+        }
+
+        function uploadMedia() {
+            document.getElementById('mediaInput').click();
+        }
+
+        async function handleMediaUpload() {
+            const file = document.getElementById('mediaInput').files[0];
+            if (!file || !token) {
+                document.getElementById('chatError').textContent = 'No file selected or not authenticated';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('media', file);
+            formData.append('sender', displayName);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('mediaInput').value = '';
+                    document.getElementById('chatError').textContent = '';
+                    await fetchMessages();
+                } else {
+                    document.getElementById('chatError').textContent = data.error || 'Failed to upload media';
+                }
+            } catch (e) {
+                document.getElementById('chatError').textContent = 'Error uploading media: ' + e.message;
+            }
         }
 
         async function fetchMessages() {
-            if (!token) return;
-            const response = await fetch('/messages', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await response.json();
-            const messagesDiv = document.getElementById('messages');
-            messagesDiv.innerHTML = data.messages.map(msg => 
-                `<div class="message">${msg.text} <span>(${new Date(msg.timestamp).toLocaleString()})</span></div>`
-            ).join('');
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            if (!token) {
+                document.getElementById('chatError').textContent = 'Please login to view messages';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/messages', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                if (data.success && data.messages) {
+                    const messagesDiv = document.getElementById('messages');
+                    messagesDiv.innerHTML = data.messages.map(msg => {
+                        let content = `<div class="message">${msg.sender || 'Anonymous'}: ${msg.text || ''}`;
+                        if (msg.mediaUrl) {
+                            if (msg.mediaUrl.match(/\.(jpeg|jpg|png|gif)$/i)) {
+                                content += `<img src="${msg.mediaUrl}" alt="Image">`;
+                            } else if (msg.mediaUrl.match(/\.(mp4|webm)$/i)) {
+                                content += `<video controls src="${msg.mediaUrl}"></video>`;
+                            }
+                        }
+                        content += `<span>(${new Date(msg.timestamp).toLocaleString()})</span></div>`;
+                        return content;
+                    }).join('');
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    document.getElementById('chatError').textContent = '';
+                } else {
+                    document.getElementById('chatError').textContent = data.error || 'No messages available';
+                }
+            } catch (e) {
+                document.getElementById('chatError').textContent = 'Error fetching messages: ' + e.message;
+            }
         }
 
-        // Auto-refresh every 5 seconds
-        setInterval(fetchMessages, 5000);
-        if (token) fetchMessages(); // Initial load if logged in
+        document.getElementById('messageInput').addEventListener('keypress', async function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                await sendMessage();
+            }
+        });
+
+        // Refresh messages every 5 seconds only when chat is visible
+        setInterval(() => {
+            if (document.getElementById('chat').style.display === 'block') {
+                fetchMessages();
+            }
+        }, 5000);
     </script>
 </body>
 </html>
