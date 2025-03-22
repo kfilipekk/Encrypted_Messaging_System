@@ -142,6 +142,7 @@ def get_messages():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute('SELECT iv, ciphertext, timestamp FROM messages WHERE user_id = ?', (user_id,))
+    #
     rows = c.fetchall()
     conn.close()
     
