@@ -6,7 +6,7 @@ import base64
 import sqlite3
 import hashlib
 import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import os
 from werkzeug.utils import secure_filename
 import logging
@@ -30,11 +30,13 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 def init_db():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
+    
     c.execute('''CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL
     )''')
+    
     c.execute('''CREATE TABLE IF NOT EXISTS messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER,
@@ -45,6 +47,17 @@ def init_db():
         timestamp TEXT NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users(id)
     )''')
+    
+    try:
+        c.execute("ALTER TABLE messages ADD COLUMN media_url TEXT")
+    except sqlite3.OperationalError:
+        pass
+    
+    try:
+        c.execute("ALTER TABLE messages ADD COLUMN sender TEXT")
+    except sqlite3.OperationalError:
+        pass
+    
     conn.commit()
     conn.close()
 
@@ -107,7 +120,7 @@ def register():
         user_id = c.lastrowid
         token = jwt.encode({
             'user_id': user_id,
-            'exp': datetime.utcnow() + timedelta(hours=24)
+            'exp': datetime.now(timezone.utc) + timedelta(hours=24)
         }, SECRET_KEY, algorithm='HS256')
         return jsonify({'token': token})
     except sqlite3.IntegrityError:
@@ -136,7 +149,7 @@ def login():
         if user:
             token = jwt.encode({
                 'user_id': user[0],
-                'exp': datetime.utcnow() + timedelta(hours=24)
+                'exp': datetime.now(timezone.utc) + timedelta(hours=24)
             }, SECRET_KEY, algorithm='HS256')
             return jsonify({'token': token})
         return jsonify({'error': 'Invalid credentials'}), 401
@@ -159,7 +172,7 @@ def send_message():
     message = data['message']
     sender = data['sender']
     encrypted = encrypt_message(message)
-    timestamp = datetime.utcnow().isoformat()
+    timestamp = datetime.now(timezone.utc).isoformat()
     
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
@@ -187,11 +200,11 @@ def upload_file():
     sender = request.form['sender']
     
     if file and allowed_file(file.filename):
-        filename = secure_filename(f"{datetime.utcnow().timestamp()}_{file.filename}")
+        filename = secure_filename(f"{datetime.now(timezone.utc).timestamp()}_{file.filename}")
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
         
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(timezone.utc).isoformat()
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
         try:
