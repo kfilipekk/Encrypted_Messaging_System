@@ -48,16 +48,6 @@ def init_db():
         FOREIGN KEY (user_id) REFERENCES users(id)
     )''')
     
-    try:
-        c.execute("ALTER TABLE messages ADD COLUMN media_url TEXT")
-    except sqlite3.OperationalError:
-        pass
-    
-    try:
-        c.execute("ALTER TABLE messages ADD COLUMN sender TEXT")
-    except sqlite3.OperationalError:
-        pass
-    
     conn.commit()
     conn.close()
 
@@ -228,17 +218,47 @@ def get_messages():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     try:
-        c.execute('SELECT iv, ciphertext, media_url, sender, timestamp FROM messages WHERE user_id = ?', (user_id,))
+        c.execute('SELECT id, iv, ciphertext, media_url, sender, timestamp FROM messages WHERE user_id = ?', (user_id,))
         rows = c.fetchall()
         messages = [{
-            'text': decrypt_message(row[0], row[1]) if row[1] else None,
-            'mediaUrl': row[2],
-            'sender': row[3],
-            'timestamp': row[4]
+            'id': row[0],
+            'text': decrypt_message(row[1], row[2]) if row[2] else None,
+            'mediaUrl': row[3],
+            'sender': row[4],
+            'timestamp': row[5]
         } for row in rows]
         return jsonify({'messages': messages})
     except Exception as e:
         app.logger.error(f"Get messages error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+    finally:
+        conn.close()
+
+@app.route('/delete/<int:message_id>', methods=['DELETE'])
+def delete_message(message_id):
+    user_id = verify_token()
+    if not user_id:
+        return jsonify({'error': 'Unauthorised'}), 401
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    try:
+        c.execute('SELECT media_url, user_id FROM messages WHERE id = ?', (message_id,))
+        message = c.fetchone()
+        if not message or message[1] != user_id:
+            return jsonify({'error': 'Message not found or unauthorised'}), 403
+
+        if message[0]:
+            try:
+                os.remove(os.path.join(app.config['UPLOAD_FOLDER'], message[0].lstrip('/uploads/')))
+            except OSError:
+                pass
+
+        c.execute('DELETE FROM messages WHERE id = ? AND user_id = ?', (message_id, user_id))
+        conn.commit()
+        return jsonify({'status': 'Message deleted'})
+    except Exception as e:
+        app.logger.error(f"Delete message error: {e}")
         return jsonify({'error': 'Internal server error'}), 500
     finally:
         conn.close()
