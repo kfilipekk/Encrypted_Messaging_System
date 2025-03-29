@@ -1,3 +1,4 @@
+<!-- static/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,149 +12,177 @@
             background: linear-gradient(135deg, #0ce797, #9cdaf1);
             min-height: 100vh;
             padding: 20px;
+            color: #2c3e50;
         }
         .container { 
-            max-width: 1000px; 
+            max-width: 1200px; 
             margin: 0 auto; 
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
         h1 { 
-            color: #2c3e50; 
             text-align: center;
-            margin-bottom: 30px;
-            font-size: 2em;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            margin-bottom: 35px;
+            font-size: 2.5em;
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            -webkit-background-clip: text;
+            color: transparent;
         }
         #auth, #chat { 
-            padding: 25px; 
-            border-radius: 10px;
+            padding: 30px; 
+            border-radius: 15px;
             background: white;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
         }
         #auth { 
-            margin-bottom: 30px; 
-            display: none; 
-            max-width: 450px;
-            margin-left: auto;
-            margin-right: auto;
+            max-width: 500px;
+            margin: 0 auto 30px;
+            display: none;
         }
         #chat { display: none; }
         #messages { 
-            border: 1px solid #e0e0e0; 
-            padding: 20px; 
-            height: 500px; 
-            overflow-y: auto; 
-            background: #f8f9fa; 
-            margin-bottom: 20px;
-            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            padding: 25px;
+            height: 600px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            margin-bottom: 25px;
+            border-radius: 12px;
             scroll-behavior: smooth;
         }
         .message { 
-            padding: 15px; 
-            margin: 10px 0;
+            padding: 15px 20px;
+            margin: 12px 0;
             background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            word-wrap: break-word;
+            border-radius: 12px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.06);
+            position: relative;
+            transition: all 0.2s;
         }
-        .message span { 
-            font-size: 0.85em; 
-            color: #7f8c8d; 
-            display: block;
-            margin-top: 8px;
+        .message:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 12px rgba(0,0,0,0.1);
         }
         .message .sender {
-            font-weight: bold;
-            color: #2c3e50;
-            margin-right: 5px;
+            font-weight: 600;
+            color: #2980b9;
+            margin-right: 8px;
+        }
+        .message span { 
+            font-size: 0.9em;
+            color: #7f8c8d;
+            display: block;
+            margin-top: 10px;
         }
         .message img, .message video {
-            max-width: 400px;
-            max-height: 250px;
+            max-width: 450px;
+            max-height: 300px;
             margin-top: 15px;
-            border-radius: 8px;
-            display: block;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+        .message-actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .message:hover .message-actions {
+            opacity: 1;
+        }
+        .delete-btn {
+            background: #e74c3c;
+            padding: 5px 10px;
+            font-size: 0.8em;
+            border-radius: 15px;
         }
         .input-container {
             display: flex;
             gap: 15px;
             flex-wrap: wrap;
             align-items: center;
+            background: #fff;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.06);
         }
         #messageInput { 
             flex: 1;
-            padding: 12px; 
-            border: 2px solid #ddd; 
+            padding: 14px 20px;
+            border: 2px solid #e0e0e0;
             border-radius: 25px;
             font-size: 1em;
-            min-width: 250px;
-            transition: border-color 0.3s;
+            min-width: 300px;
+            transition: all 0.3s;
         }
         #messageInput:focus {
             border-color: #3498db;
-            outline: none;
+            box-shadow: 0 0 8px rgba(52, 152, 219, 0.3);
         }
         button { 
-            padding: 12px 25px; 
-            background: #3498db; 
-            color: white; 
-            border: none; 
-            border-radius: 25px; 
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
             cursor: pointer;
             transition: all 0.3s;
-            font-weight: 500;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         button:hover { 
-            background: #2980b9; 
             transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
-        #logoutBtn { background: #e74c3c; }
-        #logoutBtn:hover { background: #c0392b; }
-        #mediaBtn { background: #2ecc71; }
-        #mediaBtn:hover { background: #27ae60; }
-        #refreshBtn { background: #f1c40f; color: #333; }
-        #refreshBtn:hover { background: #d4ac0d; }
+        .auth-btn { background: linear-gradient(to right, #3498db, #2980b9); color: white; }
+        #switchModeBtn { background: linear-gradient(to right, #2ecc71, #27ae60); color: white; }
+        #sendBtn { background: linear-gradient(to right, #3498db, #2980b9); color: white; }
+        #mediaBtn { background: linear-gradient(to right, #2ecc71, #27ae60); color: white; }
+        #refreshBtn { background: linear-gradient(to right, #f1c40f, #d4ac0d); color: #333; }
+        #logoutBtn { background: linear-gradient(to right, #e74c3c, #c0392b); color: white; }
         .error { 
-            color: #e74c3c; 
-            font-size: 0.9em; 
-            margin-top: 15px; 
+            color: #e74c3c;
+            font-size: 0.95em;
+            margin-top: 15px;
             text-align: center;
+            background: #fff;
+            padding: 10px;
+            border-radius: 8px;
         }
         .form-group { 
-            margin-bottom: 20px; 
+            margin-bottom: 25px;
             position: relative;
         }
         input[type="text"], input[type="password"] {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
+            padding: 14px 20px;
+            border: 2px solid #e0e0e0;
             border-radius: 25px;
             font-size: 1em;
-            transition: border-color 0.3s;
+            transition: all 0.3s;
         }
         input:focus {
             border-color: #3498db;
-            outline: none;
+            box-shadow: 0 0 8px rgba(52, 152, 219, 0.3);
         }
         #userInfo {
-            margin-bottom: 20px;
-            padding: 15px;
-            background: #ecf0f1;
-            border-radius: 8px;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: linear-gradient(to right, #ecf0f1, #f8f9fa);
+            border-radius: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.06);
         }
-        #currentUser { font-weight: bold; color: #2c3e50; }
-        #chatError { 
-            color: #e74c3c; 
-            font-size: 0.9em; 
-            margin-top: 10px; 
-            text-align: center; 
+        #currentUser { font-weight: 600; color: #2980b9; }
+        #typingIndicator {
+            font-style: italic;
+            color: #7f8c8d;
+            padding: 10px;
+            display: none;
         }
     </style>
 </head>
@@ -173,8 +202,8 @@
                 <input type="password" id="password" placeholder="Chatbot Key">
             </div>
             <div class="input-container">
-                <button onclick="authUser()">Connect</button>
-                <button onclick="toggleAuthMode()">Switch Mode</button>
+                <button class="auth-btn" onclick="authUser()">Connect</button>
+                <button id="switchModeBtn" onclick="toggleAuthMode()">Switch Mode</button>
             </div>
             <p id="authError" class="error"></p>
         </div>
@@ -185,9 +214,10 @@
                 <button id="logoutBtn" onclick="logout()">Disconnect</button>
             </div>
             <div id="messages"></div>
+            <div id="typingIndicator">Someone is typing...</div>
             <div class="input-container">
                 <input type="text" id="messageInput" placeholder="Type a message...">
-                <button onclick="sendMessage()">Send</button>
+                <button id="sendBtn" onclick="sendMessage()">Send</button>
                 <button id="mediaBtn" onclick="uploadMedia()">Media</button>
                 <button id="refreshBtn" onclick="fetchMessages()">Refresh</button>
             </div>
@@ -201,8 +231,9 @@
         let token = localStorage.getItem('chatToken');
         let displayName = localStorage.getItem('chatDisplayName');
         const API_BASE_URL = 'http://localhost:5000';
+        let lastMessageCount = 0;
+        let typingTimeout;
 
-        // Initial setup
         window.onload = () => {
             if (token && displayName) {
                 showChat();
@@ -239,9 +270,7 @@
                 });
 
                 const data = await response.json();
-                if (!response.ok) {
-                    throw new Error(data.error || 'Authentication failed');
-                }
+                if (!response.ok) throw new Error(data.error || 'Authentication failed');
 
                 localStorage.setItem('chatToken', data.token);
                 localStorage.setItem('chatDisplayName', displayNameInput);
@@ -252,7 +281,6 @@
                 fetchMessages();
             } catch (e) {
                 errorDiv.textContent = `Error: ${e.message}`;
-                console.error('Auth error:', e);
             }
         }
 
@@ -263,8 +291,7 @@
         }
 
         function logout() {
-            localStorage.removeItem('chatToken');
-            localStorage.removeItem('chatDisplayName');
+            localStorage.clear();
             token = null;
             displayName = null;
             document.getElementById('chat').style.display = 'none';
@@ -276,16 +303,12 @@
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
             const errorDiv = document.getElementById('chatError');
-            errorDiv.textContent = '';
 
             if (!token) {
                 errorDiv.textContent = 'Error: You must be logged in';
                 return;
             }
-            if (!message) {
-                errorDiv.textContent = 'Error: Please enter a message';
-                return;
-            }
+            if (!message) return;
 
             try {
                 const response = await fetch(`${API_BASE_URL}/send`, {
@@ -306,7 +329,20 @@
                 fetchMessages();
             } catch (e) {
                 errorDiv.textContent = `Error: ${e.message}`;
-                console.error('Send error:', e);
+            }
+        }
+
+        async function deleteMessage(messageId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/delete/${messageId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorisation': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to delete message');
+                fetchMessages();
+            } catch (e) {
+                document.getElementById('chatError').textContent = `Error: ${e.message}`;
             }
         }
 
@@ -317,13 +353,8 @@
         async function handleMediaUpload() {
             const file = document.getElementById('mediaInput').files[0];
             const errorDiv = document.getElementById('chatError');
-            errorDiv.textContent = '';
 
-            if (!token) {
-                errorDiv.textContent = 'Error: You must be logged in to upload media';
-                return;
-            }
-            if (!file) return;
+            if (!token || !file) return;
 
             const formData = new FormData();
             formData.append('media', file);
@@ -344,14 +375,12 @@
                 fetchMessages();
             } catch (e) {
                 errorDiv.textContent = `Error: ${e.message}`;
-                console.error('Upload error:', e);
             }
         }
 
         async function fetchMessages() {
             if (!token) return;
             const errorDiv = document.getElementById('chatError');
-            errorDiv.textContent = '';
 
             try {
                 const response = await fetch(`${API_BASE_URL}/messages`, {
@@ -365,36 +394,52 @@
 
                 const data = await response.json();
                 const messagesDiv = document.getElementById('messages');
-                messagesDiv.innerHTML = data.messages.map(msg => {
-                    let content = `<div class="message"><span class="sender">${msg.sender || 'User'}</span>: `;
-                    if (msg.text) content += `${msg.text}`;
-                    if (msg.mediaUrl) {
-                        if (msg.mediaUrl.match(/\.(jpeg|jpg|png|gif)$/i)) {
-                            content += `<img src="${API_BASE_URL}${msg.mediaUrl}" alt="Image">`;
-                        } else if (msg.mediaUrl.match(/\.(mp4|webm)$/i)) {
-                            content += `<video controls src="${API_BASE_URL}${msg.mediaUrl}"></video>`;
+                
+                if (data.messages.length !== lastMessageCount) {
+                    messagesDiv.innerHTML = data.messages.map((msg, index) => {
+                        let content = `
+                            <div class="message">
+                                <span class="sender">${msg.sender || 'User'}</span>: 
+                                ${msg.text || ''}
+                                <div class="message-actions">
+                                    <button class="delete-btn" onclick="deleteMessage(${index})">Delete</button>
+                                </div>`;
+                        if (msg.mediaUrl) {
+                            content += msg.mediaUrl.match(/\.(jpeg|jpg|png|gif)$/i) ?
+                                `<img src="${API_BASE_URL}${msg.mediaUrl}" alt="Image">` :
+                                `<video controls src="${API_BASE_URL}${msg.mediaUrl}"></video>`;
                         }
-                    }
-                    content += `<span>(${new Date(msg.timestamp).toLocaleString()})</span></div>`;
-                    return content;
-                }).join('');
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                        content += `<span>(${new Date(msg.timestamp).toLocaleString()})</span></div>`;
+                        return content;
+                    }).join('');
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    lastMessageCount = data.messages.length;
+                }
             } catch (e) {
                 errorDiv.textContent = `Error: ${e.message}`;
-                console.error('Fetch error:', e);
             }
         }
 
+        function showTypingIndicator() {
+            clearTimeout(typingTimeout);
+            document.getElementById('typingIndicator').style.display = 'block';
+            typingTimeout = setTimeout(() => {
+                document.getElementById('typingIndicator').style.display = 'none';
+            }, 2000);
+        }
+
         // Event Listeners
-        document.getElementById('messageInput').addEventListener('keypress', (event) => {
+        const messageInput = document.getElementById('messageInput');
+        messageInput.addEventListener('keypress', (event) => {
             if (event.key === 'Enter') {
                 event.preventDefault();
                 sendMessage();
             }
         });
 
-        // Auto-refresh messages every 3 seconds
-        setInterval(fetchMessages, 3000);
+        messageInput.addEventListener('input', showTypingIndicator);
+
+        setInterval(fetchMessages, 2000);
     </script>
 </body>
 </html>
