@@ -1,4 +1,3 @@
-<!-- static/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,12 +22,13 @@
             box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
         h1 { 
-            text-align: center;
+            text-align: centre;
             margin-bottom: 35px;
             font-size: 2.5em;
             background: linear-gradient(to right, #3498db, #2ecc71);
             -webkit-background-clip: text;
-            color: transparent;
+            background-clip: text;
+            color: transparent; 
         }
         #auth, #chat { 
             padding: 30px; 
@@ -50,7 +50,7 @@
             background: #f8f9fa;
             margin-bottom: 25px;
             border-radius: 12px;
-            scroll-behavior: smooth;
+            scroll-behavior: smooth; 
         }
         .message { 
             padding: 15px 20px;
@@ -103,7 +103,7 @@
             display: flex;
             gap: 15px;
             flex-wrap: wrap;
-            align-items: center;
+            align-items: centre;
             background: #fff;
             padding: 15px;
             border-radius: 12px;
@@ -131,22 +131,23 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            color: white;
         }
         button:hover { 
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
-        .auth-btn { background: linear-gradient(to right, #3498db, #2980b9); color: white; }
-        #switchModeBtn { background: linear-gradient(to right, #2ecc71, #27ae60); color: white; }
-        #sendBtn { background: linear-gradient(to right, #3498db, #2980b9); color: white; }
-        #mediaBtn { background: linear-gradient(to right, #2ecc71, #27ae60); color: white; }
-        #refreshBtn { background: linear-gradient(to right, #f1c40f, #d4ac0d); color: #333; }
-        #logoutBtn { background: linear-gradient(to right, #e74c3c, #c0392b); color: white; }
+        .auth-btn { background: linear-gradient(to right, #3498db, #2980b9); }
+        #switchModeBtn { background: linear-gradient(to right, #2ecc71, #27ae60); }
+        #sendBtn { background: linear-gradient(to right, #3498db, #2980b9); }
+        #mediaBtn { background: linear-gradient(to right, #2ecc71, #27ae60); }
+        #refreshBtn { background: linear-gradient(to right, #f1c40f, #d4ac0d); color: #333; } 
+        #logoutBtn { background: linear-gradient(to right, #e74c3c, #c0392b); }
         .error { 
             color: #e74c3c;
             font-size: 0.95em;
             margin-top: 15px;
-            text-align: center;
+            text-align: centre;
             background: #fff;
             padding: 10px;
             border-radius: 8px;
@@ -174,7 +175,7 @@
             border-radius: 12px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: centre;
             box-shadow: 0 3px 8px rgba(0,0,0,0.06);
         }
         #currentUser { font-weight: 600; color: #2980b9; }
@@ -396,13 +397,13 @@
                 const messagesDiv = document.getElementById('messages');
                 
                 if (data.messages.length !== lastMessageCount) {
-                    messagesDiv.innerHTML = data.messages.map((msg, index) => {
+                    messagesDiv.innerHTML = data.messages.map(msg => {
                         let content = `
                             <div class="message">
                                 <span class="sender">${msg.sender || 'User'}</span>: 
                                 ${msg.text || ''}
                                 <div class="message-actions">
-                                    <button class="delete-btn" onclick="deleteMessage(${index})">Delete</button>
+                                    <button class="delete-btn" onclick="deleteMessage(${msg.id})">Delete</button>
                                 </div>`;
                         if (msg.mediaUrl) {
                             content += msg.mediaUrl.match(/\.(jpeg|jpg|png|gif)$/i) ?
@@ -428,7 +429,6 @@
             }, 2000);
         }
 
-        // Event Listeners
         const messageInput = document.getElementById('messageInput');
         messageInput.addEventListener('keypress', (event) => {
             if (event.key === 'Enter') {
