@@ -22,7 +22,7 @@
             box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
         h1 { 
-            text-align: centre;
+            text-align: center;
             margin-bottom: 35px;
             font-size: 2.5em;
             background: linear-gradient(to right, #3498db, #2ecc71);
@@ -76,7 +76,7 @@
             display: block;
             margin-top: 10px;
         }
-        .message img, .message video {
+        .message img, .message video, .message audio {
             max-width: 450px;
             max-height: 300px;
             margin-top: 15px;
@@ -93,17 +93,20 @@
         .message:hover .message-actions {
             opacity: 1;
         }
-        .delete-btn {
-            background: #e74c3c;
+        .edit-btn, .delete-btn {
             padding: 5px 10px;
             font-size: 0.8em;
             border-radius: 15px;
+            margin-left: 5px;
+            color: white;
         }
+        .edit-btn { background: #f39c12; }
+        .delete-btn { background: #e74c3c; }
         .input-container {
             display: flex;
             gap: 15px;
             flex-wrap: wrap;
-            align-items: centre;
+            align-items: center;
             background: #fff;
             padding: 15px;
             border-radius: 12px;
@@ -141,13 +144,14 @@
         #switchModeBtn { background: linear-gradient(to right, #2ecc71, #27ae60); }
         #sendBtn { background: linear-gradient(to right, #3498db, #2980b9); }
         #mediaBtn { background: linear-gradient(to right, #2ecc71, #27ae60); }
+        #voiceBtn { background: linear-gradient(to right, #9b59b6, #8e44ad); }
         #refreshBtn { background: linear-gradient(to right, #f1c40f, #d4ac0d); color: #333; } 
         #logoutBtn { background: linear-gradient(to right, #e74c3c, #c0392b); }
         .error { 
             color: #e74c3c;
             font-size: 0.95em;
             margin-top: 15px;
-            text-align: centre;
+            text-align: center;
             background: #fff;
             padding: 10px;
             border-radius: 8px;
@@ -175,7 +179,7 @@
             border-radius: 12px;
             display: flex;
             justify-content: space-between;
-            align-items: centre;
+            align-items: center;
             box-shadow: 0 3px 8px rgba(0,0,0,0.06);
         }
         #currentUser { font-weight: 600; color: #2980b9; }
@@ -185,6 +189,8 @@
             padding: 10px;
             display: none;
         }
+        .edited { font-style: italic; color: #7f8c8d; }
+        .read { color: #27ae60; }
     </style>
 </head>
 <body>
@@ -220,10 +226,11 @@
                 <input type="text" id="messageInput" placeholder="Type a message...">
                 <button id="sendBtn" onclick="sendMessage()">Send</button>
                 <button id="mediaBtn" onclick="uploadMedia()">Media</button>
+                <button id="voiceBtn" onclick="startVoiceRecording()">Voice</button>
                 <button id="refreshBtn" onclick="fetchMessages()">Refresh</button>
             </div>
             <p id="chatError" class="error"></p>
-            <input type="file" id="mediaInput" accept="image/*,video/*" style="display:none" onchange="handleMediaUpload()">
+            <input type="file" id="mediaInput" accept="image/*,video/*,audio/*" style="display:none" onchange="handleMediaUpload()">
         </div>
     </div>
 
@@ -234,6 +241,8 @@
         const API_BASE_URL = 'http://localhost:5000';
         let lastMessageCount = 0;
         let typingTimeout;
+        let mediaRecorder;
+        let audioChunks = [];
 
         window.onload = () => {
             if (token && displayName) {
@@ -291,7 +300,15 @@
             document.getElementById('chatError').textContent = '';
         }
 
-        function logout() {
+        async function logout() {
+            try {
+                await fetch(`${API_BASE_URL}/logout`, {
+                    method: 'POST',
+                    headers: { 'Authorisation': `Bearer ${token}` }
+                });
+            } catch (e) {
+                console.error('Logout failed:', e);
+            }
             localStorage.clear();
             token = null;
             displayName = null;
@@ -333,6 +350,27 @@
             }
         }
 
+        async function editMessage(messageId, currentText) {
+            const newText = prompt('Edit message:', currentText);
+            if (!newText || newText === currentText) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/edit/${messageId}`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorisation': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ message: newText })
+                });
+
+                if (!response.ok) throw new Error('Failed to edit message');
+                fetchMessages();
+            } catch (e) {
+                document.getElementById('chatError').textContent = `Error: ${e.message}`;
+            }
+        }
+
         async function deleteMessage(messageId) {
             try {
                 const response = await fetch(`${API_BASE_URL}/delete/${messageId}`, {
@@ -344,6 +382,18 @@
                 fetchMessages();
             } catch (e) {
                 document.getElementById('chatError').textContent = `Error: ${e.message}`;
+            }
+        }
+
+        async function markMessageRead(messageId) {
+            try {
+                await fetch(`${API_BASE_URL}/mark_read/${messageId}`, {
+                    method: 'POST',
+                    headers: { 'Authorisation': `Bearer ${token}` }
+                });
+                fetchMessages();
+            } catch (e) {
+                console.error('Failed to mark read:', e);
             }
         }
 
@@ -379,6 +429,55 @@
             }
         }
 
+        async function startVoiceRecording() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                document.getElementById('chatError').textContent = 'Voice recording not supported';
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+                mediaRecorder.onstop = sendAudioMessage;
+
+                mediaRecorder.start();
+                document.getElementById('voiceBtn').textContent = 'Stop';
+                document.getElementById('voiceBtn').onclick = stopVoiceRecording;
+            } catch (e) {
+                document.getElementById('chatError').textContent = `Error: ${e.message}`;
+            }
+        }
+
+        function stopVoiceRecording() {
+            mediaRecorder.stop();
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            document.getElementById('voiceBtn').textContent = 'Voice';
+            document.getElementById('voiceBtn').onclick = startVoiceRecording;
+        }
+
+        async function sendAudioMessage() {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+            const formData = new FormData();
+            formData.append('media', audioBlob, `voice_${Date.now()}.mp3`);
+            formData.append('sender', displayName);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/upload`, {
+                    method: 'POST',
+                    headers: { 'Authorisation': `Bearer ${token}` },
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Failed to send voice message');
+                fetchMessages();
+            } catch (e) {
+                document.getElementById('chatError').textContent = `Error: ${e.message}`;
+            }
+        }
+
         async function fetchMessages() {
             if (!token) return;
             const errorDiv = document.getElementById('chatError');
@@ -399,18 +498,24 @@
                 if (data.messages.length !== lastMessageCount) {
                     messagesDiv.innerHTML = data.messages.map(msg => {
                         let content = `
-                            <div class="message">
+                            <div class="message ${msg.read ? 'read' : ''}">
                                 <span class="sender">${msg.sender || 'User'}</span>: 
                                 ${msg.text || ''}
                                 <div class="message-actions">
+                                    <button class="edit-btn" onclick="editMessage(${msg.id}, '${msg.text || ''}')">Edit</button>
                                     <button class="delete-btn" onclick="deleteMessage(${msg.id})">Delete</button>
                                 </div>`;
                         if (msg.mediaUrl) {
-                            content += msg.mediaUrl.match(/\.(jpeg|jpg|png|gif)$/i) ?
-                                `<img src="${API_BASE_URL}${msg.mediaUrl}" alt="Image">` :
-                                `<video controls src="${API_BASE_URL}${msg.mediaUrl}"></video>`;
+                            if (msg.mediaUrl.match(/\.(jpeg|jpg|png|gif)$/i)) {
+                                content += `<img src="${API_BASE_URL}${msg.mediaUrl}" alt="Image">`;
+                            } else if (msg.mediaUrl.match(/\.(mp4|webm)$/i)) {
+                                content += `<video controls src="${API_BASE_URL}${msg.mediaUrl}"></video>`;
+                            } else if (msg.mediaUrl.match(/\.(mp3|wav)$/i)) {
+                                content += `<audio controls src="${API_BASE_URL}${msg.mediaUrl}"></audio>`;
+                            }
                         }
-                        content += `<span>(${new Date(msg.timestamp).toLocaleString()})</span></div>`;
+                        content += `<span>(${new Date(msg.timestamp).toLocaleString()})${msg.edited ? ' <span class="edited">(Edited)</span>' : ''}</span></div>`;
+                        if (!msg.read) setTimeout(() => markMessageRead(msg.id), 1000);
                         return content;
                     }).join('');
                     messagesDiv.scrollTop = messagesDiv.scrollHeight;

@@ -8,7 +8,7 @@ import hashlib
 import jwt
 from datetime import datetime, timedelta, timezone
 import os
-from werkzeug.utils import secure_filename
+from werkzeug.utils import secure_filename 
 import logging
 
 app = Flask(__name__, static_folder='static', static_url_path='')
@@ -19,13 +19,13 @@ SECRET_KEY = os.environ.get('SECRET_KEY', os.urandom(32))
 AES_KEY = os.environ.get('AES_KEY', os.urandom(16))
 DB_FILE = 'messages.db'
 UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'webm'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'webm', 'mp3', 'wav'}
 
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 
 def init_db():
     conn = sqlite3.connect(DB_FILE)
@@ -34,7 +34,8 @@ def init_db():
     c.execute('''CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL
+        password_hash TEXT NOT NULL,
+        status TEXT DEFAULT 'offline'
     )''')
     
     c.execute('''CREATE TABLE IF NOT EXISTS messages (
@@ -45,13 +46,20 @@ def init_db():
         media_url TEXT,
         sender TEXT,
         timestamp TEXT NOT NULL,
+        edited INTEGER DEFAULT 0,
+        read INTEGER DEFAULT 0,
         FOREIGN KEY (user_id) REFERENCES users(id)
     )''')
     
+    c.execute("PRAGMA table_info(messages)")
+    columns = [col[1] for col in c.fetchall()]
+    if 'edited' not in columns:
+        c.execute('ALTER TABLE messages ADD COLUMN edited INTEGER DEFAULT 0')
+    if 'read' not in columns:
+        c.execute('ALTER TABLE messages ADD COLUMN read INTEGER DEFAULT 0')
+    
     conn.commit()
     conn.close()
-
-init_db()
 
 def encrypt_message(message):
     cipher = AES.new(AES_KEY, AES.MODE_CBC)
@@ -115,9 +123,6 @@ def register():
         return jsonify({'token': token})
     except sqlite3.IntegrityError:
         return jsonify({'error': 'Username already exists'}), 400
-    except Exception as e:
-        app.logger.error(f"Registration error: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
     finally:
         conn.close()
 
@@ -137,17 +142,29 @@ def login():
         c.execute('SELECT id FROM users WHERE username = ? AND password_hash = ?', (username, password_hash))
         user = c.fetchone()
         if user:
+            c.execute('UPDATE users SET status = ? WHERE id = ?', ('online', user[0]))
+            conn.commit()
             token = jwt.encode({
                 'user_id': user[0],
                 'exp': datetime.now(timezone.utc) + timedelta(hours=24)
             }, SECRET_KEY, algorithm='HS256')
             return jsonify({'token': token})
         return jsonify({'error': 'Invalid credentials'}), 401
-    except Exception as e:
-        app.logger.error(f"Login error: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
     finally:
         conn.close()
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    user_id = verify_token()
+    if not user_id:
+        return jsonify({'error': 'Unauthorised'}), 401
+    
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute('UPDATE users SET status = ? WHERE id = ?', ('offline', user_id))
+    conn.commit()
+    conn.close()
+    return jsonify({'status': 'Logged out'})
 
 @app.route('/send', methods=['POST'])
 def send_message():
@@ -171,9 +188,6 @@ def send_message():
                  (user_id, encrypted['iv'], encrypted['ciphertext'], sender, timestamp))
         conn.commit()
         return jsonify({'status': 'Message sent'})
-    except Exception as e:
-        app.logger.error(f"Send message error: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
     finally:
         conn.close()
 
@@ -202,12 +216,49 @@ def upload_file():
                      (user_id, base64.b64encode(os.urandom(16)).decode('utf-8'), f'/{UPLOAD_FOLDER}/{filename}', sender, timestamp))
             conn.commit()
             return jsonify({'status': 'Media uploaded'})
-        except Exception as e:
-            app.logger.error(f"Upload error: {e}")
-            return jsonify({'error': 'Internal server error'}), 500
         finally:
             conn.close()
     return jsonify({'error': 'Invalid file type'}), 400
+
+@app.route('/edit/<int:message_id>', methods=['PUT'])
+def edit_message(message_id):
+    user_id = verify_token()
+    if not user_id:
+        return jsonify({'error': 'Unauthorised'}), 401
+    
+    data = request.get_json()
+    if not data or 'message' not in data:
+        return jsonify({'error': 'Message required'}), 400
+    
+    message = data['message']
+    encrypted = encrypt_message(message)
+    
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    try:
+        c.execute('UPDATE messages SET ciphertext = ?, iv = ?, edited = 1 WHERE id = ? AND user_id = ?',
+                 (encrypted['ciphertext'], encrypted['iv'], message_id, user_id))
+        if c.rowcount == 0:
+            return jsonify({'error': 'Message not found or unauthorised'}), 403
+        conn.commit()
+        return jsonify({'status': 'Message edited'})
+    finally:
+        conn.close()
+
+@app.route('/mark_read/<int:message_id>', methods=['POST'])
+def mark_read(message_id):
+    user_id = verify_token()
+    if not user_id:
+        return jsonify({'error': 'Unauthorised'}), 401
+    
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    try:
+        c.execute('UPDATE messages SET read = 1 WHERE id = ? AND user_id = ?', (message_id, user_id))
+        conn.commit()
+        return jsonify({'status': 'Message marked as read'})
+    finally:
+        conn.close()
 
 @app.route('/messages', methods=['GET'])
 def get_messages():
@@ -218,19 +269,18 @@ def get_messages():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     try:
-        c.execute('SELECT id, iv, ciphertext, media_url, sender, timestamp FROM messages WHERE user_id = ?', (user_id,))
+        c.execute('SELECT id, iv, ciphertext, media_url, sender, timestamp, edited, read FROM messages WHERE user_id = ?', (user_id,))
         rows = c.fetchall()
         messages = [{
             'id': row[0],
             'text': decrypt_message(row[1], row[2]) if row[2] else None,
             'mediaUrl': row[3],
             'sender': row[4],
-            'timestamp': row[5]
+            'timestamp': row[5],
+            'edited': bool(row[6]),
+            'read': bool(row[7])
         } for row in rows]
         return jsonify({'messages': messages})
-    except Exception as e:
-        app.logger.error(f"Get messages error: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
     finally:
         conn.close()
 
@@ -257,19 +307,13 @@ def delete_message(message_id):
         c.execute('DELETE FROM messages WHERE id = ? AND user_id = ?', (message_id, user_id))
         conn.commit()
         return jsonify({'status': 'Message deleted'})
-    except Exception as e:
-        app.logger.error(f"Delete message error: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
     finally:
         conn.close()
 
 @app.route(f'/{UPLOAD_FOLDER}/<filename>')
 def uploaded_file(filename):
-    try:
-        return send_from_directory(UPLOAD_FOLDER, filename)
-    except Exception as e:
-        app.logger.error(f"File serve error: {e}")
-        return jsonify({'error': 'File not found'}), 404
+    return send_from_directory(UPLOAD_FOLDER, filename)
 
 if __name__ == '__main__':
+    init_db()
     app.run(debug=True, host='0.0.0.0', port=5000)
